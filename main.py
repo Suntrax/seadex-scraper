@@ -1,9 +1,41 @@
 from playwright.async_api import async_playwright
+import requests
 import asyncio
 
 
-def get_anilist_id(anime_name: str) -> str:
-    return "137822"
+def get_anilist_id(anime_name: str) -> str | None:
+    query = """
+    query ($search: String) {
+      Media(search: $search, type: ANIME) {
+        id
+        idMal
+        title {
+          romaji
+          english
+          native
+        }
+      }
+    }
+    """
+
+    variables = {
+        "search": anime_name
+    }
+
+    response = requests.post(
+        "https://graphql.anilist.co",
+        json={
+            "query": query,
+            "variables": variables
+        },
+        timeout=10
+    )
+
+    response.raise_for_status()
+
+    data = response.json()["data"]["Media"]
+
+    return str(data["id"])
 
 
 # -----------------------------
